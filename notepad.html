@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小黑记事本</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #ffffff;
+            min-height: 100vh;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #000;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+        .notepad-container {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .search-container {
+            position: relative;
+        }
+        .search-box {
+            display: flex;
+        }
+        .note-input {
+            flex: 1;
+            padding: 12px 16px 12px 40px;
+            border: 2px solid #ddd;
+            border-radius: 25px 0 0 25px;
+            border-right: none;
+            box-sizing: border-box;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+            position: relative;
+        }
+        .note-input::before {
+            content: "🔍";
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 16px;
+            pointer-events: none;
+        }
+        .note-input:focus {
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+        .add-btn {
+            background: #007aff;
+            color: white;
+            padding: 12px 20px;
+            border: 2px solid #007aff;
+            border-radius: 0 25px 25px 0;
+            border-left: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+        .add-btn:hover {
+            background: #0056cc;
+        }
+        .clear-btn {
+            position: absolute;
+            right: 0;
+            bottom: -35px;
+            font-size: 12px;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.5);
+            color: #666;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: text-decoration 0.3s ease;
+        }
+        .clear-btn:hover {
+            text-decoration: underline;
+        }
+        .dropdown-container {
+            position: relative;
+        }
+        .note-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 70px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: none;
+        }
+        .note-list.show {
+            display: block;
+        }
+        .note-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+        .note-item:last-child {
+            border-bottom: none;
+        }
+        .note-item:hover {
+            background-color: #f8f9fa;
+        }
+        .note-text {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .delete-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+        .delete-btn:hover {
+            background: #e68900;
+        }
+        .calendar {
+            max-width: 400px;
+            margin: 0 auto 40px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .calendar-header #selectedDate {
+            font-size: 14px;
+            color: #007aff;
+            margin-left: 20px;
+            cursor: pointer;
+        }
+        .calendar-header button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #007aff;
+        }
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            margin-bottom: 10px;
+        }
+        .weekdays div {
+            text-align: center;
+            font-weight: bold;
+            color: #666;
+            padding: 5px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .day {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .day:hover {
+            background: #e0e0e0;
+        }
+        .day.today {
+            background: #ff6b6b;
+            color: white;
+        }
+        .day.selected {
+            background: #007aff;
+            color: white;
+        }
+        .day.other-month {
+            color: #ddd;
+        }
+        .hint {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar">
+        <div class="calendar-header">
+            <button id="prevMonth">&lt;</button>
+            <h2 id="monthYear"></h2>
+            <span id="selectedDate"></span>
+            <button id="nextMonth">&gt;</button>
+        </div>
+        <div class="weekdays">
+            <div>日</div>
+            <div>一</div>
+            <div>二</div>
+            <div>三</div>
+            <div>四</div>
+            <div>五</div>
+            <div>六</div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+    <h1>记事本</h1>
+    <div class="notepad-container">
+        <div id="hint" class="hint" style="display: none;">请输入需要记录的事情</div>
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="noteInput" class="note-input" placeholder="输入笔记内容">
+                <button id="addBtn" class="add-btn">添加</button>
+            </div>
+            <button id="clearBtn" class="clear-btn">一键删除</button>
+        </div>
+        <div class="dropdown-container">
+            <ul id="noteList" class="note-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const noteInput = document.getElementById('noteInput');
+        const addBtn = document.getElementById('addBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const noteList = document.getElementById('noteList');
+
+        let notes = JSON.parse(localStorage.getItem('notes')) || [];
+        let nextId = 1;
+
+        // 初始化ID
+        if (notes.length > 0) {
+            if (typeof notes[0] === 'string') {
+                // 迁移旧数据
+                notes = notes.map((text, index) => ({id: index + 1, text}));
+            }
+            nextId = Math.max(...notes.map(note => note.id)) + 1;
+        }
+
+        function renderNotes() {
+            noteList.innerHTML = '';
+            if (notes.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'no-notes';
+                li.textContent = '暂无笔记';
+                noteList.appendChild(li);
+            } else {
+                notes.forEach((note) => {
+                    const li = document.createElement('li');
+                    li.className = 'note-item';
+                    li.innerHTML = `
+                        <span class="note-text">${note.id}. ${note.text}</span>
+                        <button class="delete-btn" onclick="deleteNote(${note.id})">删除</button>
+                    `;
+                    noteList.appendChild(li);
+                });
+            }
+            noteList.classList.toggle('show', notes.length > 0);
+        }
+
+        function addNote() {
+            const noteText = noteInput.value.trim();
+            if (!noteText) {
+                hint.style.display = 'block';
+                return;
+            }
+            hint.style.display = 'none';
+            notes.unshift({id: 0, text: noteText}); // temp id
+            // 重新编号
+            notes.forEach((note, index) => {
+                note.id = index + 1;
+            });
+            nextId = notes.length + 1;
+            noteInput.value = '';
+            saveNotes();
+            renderNotes();
+        }
+
+        function deleteNote(id) {
+            notes = notes.filter(note => note.id !== id);
+            // 重新编号
+            notes.forEach((note, index) => {
+                note.id = index + 1;
+            });
+            nextId = notes.length + 1;
+            saveNotes();
+            renderNotes();
+        }
+
+        function clearAllNotes() {
+            notes = [];
+            nextId = 1;
+            saveNotes();
+            renderNotes();
+        }
+
+        function saveNotes() {
+            localStorage.setItem('notes', JSON.stringify(notes));
+        }
+
+        addBtn.addEventListener('click', addNote);
+        clearBtn.addEventListener('click', clearAllNotes);
+        noteInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addNote();
+            }
+        });
+
+        renderNotes();
+
+        // Calendar functionality
+        const monthYear = document.getElementById('monthYear');
+        const selectedDateEl = document.getElementById('selectedDate');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+
+        let currentDate = new Date();
+        let selectedDate = null;
+
+        function renderCalendar(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const endDate = new Date(lastDay);
+            endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
+
+            monthYear.textContent = `${year}年 ${month + 1}月`;
+
+            if (selectedDate) {
+                selectedDateEl.textContent = `选中: ${selectedDate.getFullYear()}年${selectedDate.getMonth() + 1}月${selectedDate.getDate()}日`;
+            } else {
+                selectedDateEl.textContent = '';
+            }
+
+            calendarGrid.innerHTML = '';
+
+            let current = new Date(startDate);
+            while (current <= endDate) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day';
+                dayDiv.textContent = current.getDate();
+
+                const currentDateValue = new Date(current); // Capture the current date value
+
+                if (current.getMonth() !== month) {
+                    dayDiv.classList.add('other-month');
+                } else if (current.toDateString() === new Date().toDateString()) {
+                    dayDiv.classList.add('today');
+                }
+
+                if (selectedDate && current.toDateString() === selectedDate.toDateString()) {
+                    dayDiv.classList.add('selected');
+                }
+
+                dayDiv.addEventListener('click', () => {
+                    if (selectedDate && currentDateValue.toDateString() === selectedDate.toDateString()) {
+                        selectedDate = null;
+                    } else {
+                        selectedDate = new Date(currentDateValue);
+                    }
+                    renderCalendar(date);
+                });
+
+                calendarGrid.appendChild(dayDiv);
+                current.setDate(current.getDate() + 1);
+            }
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar(currentDate);
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar(currentDate);
+        });
+
+        selectedDateEl.addEventListener('click', () => {
+            selectedDate = null;
+            renderCalendar(currentDate);
+        });
+
+        renderCalendar(currentDate);
+    </script>
+</body>
+</html>
