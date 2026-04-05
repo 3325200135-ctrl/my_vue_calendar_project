@@ -1,0 +1,2 @@
+# my_vue_calendar_project
+一个基于Vue.js开发的日历记事本应用，支持日期选择和待办事项记录功能
